@@ -289,7 +289,8 @@ func (p *blockBodyDiffPrinter) writeAttrDiff(name string, attrS *configschema.At
 	} else {
 		switch {
 		case showJustNew:
-			p.writeValue(new, action, indent+2)
+			p.writeValue(cty.StringVal("Hello!!"), action, indent+2)
+			// p.writeValue(new, action, indent+2)
 			if p.pathForcesNewResource(path) {
 				p.buf.WriteString(p.color.Color(forcesNewResourceCaption))
 			}
