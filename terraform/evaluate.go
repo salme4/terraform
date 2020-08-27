@@ -205,6 +205,8 @@ func (d *evaluationStateData) GetForEachAttr(addr addrs.ForEachAttr, rng tfdiags
 func (d *evaluationStateData) GetInputVariable(addr addrs.InputVariable, rng tfdiags.SourceRange) (cty.Value, tfdiags.Diagnostics) {
 	var diags tfdiags.Diagnostics
 
+	fmt.Println("GetInputVariable")
+	fmt.Printf("The sensitivity is %v for %s\n", addr.Sensitive, addr.Name)
 	// First we'll make sure the requested value is declared in configuration,
 	// so we can produce a nice message if not.
 	moduleConfig := d.Evaluator.Config.DescendentForInstance(d.ModulePath)
@@ -289,6 +291,10 @@ func (d *evaluationStateData) GetInputVariable(addr addrs.InputVariable, rng tfd
 		// Stub out our return value so that the semantic checker doesn't
 		// produce redundant downstream errors.
 		val = cty.UnknownVal(wantType)
+	}
+
+	if config.Sensitive {
+		val = val.Mark("sensitive")
 	}
 
 	return val, diags

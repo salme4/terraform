@@ -337,11 +337,14 @@ type Change struct {
 // to call the corresponding Encode method of that struct rather than working
 // directly with its embedded Change.
 func (c *Change) Encode(ty cty.Type) (*ChangeSrc, error) {
-	beforeDV, err := NewDynamicValue(c.Before, ty)
+	unmarked, _ = c.Before.UnmarkDeep()
+	beforeDV, err := NewDynamicValue(unmarked, ty)
 	if err != nil {
 		return nil, err
 	}
-	afterDV, err := NewDynamicValue(c.After, ty)
+	unmarked2, _ = c.After.UnmarkDeep()
+
+	afterDV, err := NewDynamicValue(unmarked, ty)
 	if err != nil {
 		return nil, err
 	}

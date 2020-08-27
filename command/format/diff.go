@@ -289,8 +289,7 @@ func (p *blockBodyDiffPrinter) writeAttrDiff(name string, attrS *configschema.At
 	} else {
 		switch {
 		case showJustNew:
-			p.writeValue(cty.StringVal("Hello!!"), action, indent+2)
-			// p.writeValue(new, action, indent+2)
+			p.writeValue(new, action, indent+2)
 			if p.pathForcesNewResource(path) {
 				p.buf.WriteString(p.color.Color(forcesNewResourceCaption))
 			}
@@ -519,6 +518,17 @@ func (p *blockBodyDiffPrinter) writeNestedBlockDiff(name string, label *string, 
 }
 
 func (p *blockBodyDiffPrinter) writeValue(val cty.Value, action plans.Action, indent int) {
+	// If val has the tag thing
+	// p.buf.WriteString("(sensitive)")
+	// return
+	// type valueSensitivity bool
+	// var isSensitive valueSensitivity = true
+	// val = val.Mark(isSensitive)
+	// fmt.Println(isSensitive)
+	fmt.Printf("Checking mark: %v\n", val.IsMarked())
+	// fmt.Printf("%#v\n", val.Marks())
+	// fmt.Println("marking worked")
+
 	if !val.IsKnown() {
 		p.buf.WriteString("(known after apply)")
 		return

@@ -1,6 +1,8 @@
 package terraform
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/configs"
 )
@@ -25,11 +27,14 @@ func (t *RootVariableTransformer) Transform(g *Graph) error {
 	// module variables are handled by ModuleVariableTransformer.
 	vars := t.Config.Module.Variables
 
+	fmt.Println("Adding variables")
 	// Add all variables here
 	for _, v := range vars {
+		fmt.Printf("Adding NodeRootVariable: sensitivity for %s is %v\n", v.Name, v.Sensitive)
 		node := &NodeRootVariable{
 			Addr: addrs.InputVariable{
-				Name: v.Name,
+				Name:      v.Name,
+				Sensitive: true, //v.Sensitive,
 			},
 			Config: v,
 		}

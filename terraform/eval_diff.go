@@ -141,6 +141,23 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 		return nil, diags.Err()
 	}
 
+	fmt.Printf("EVALDIFF Marks are/not present: %#v\n", configVal.ContainsMarked())
+	var pee cty.Path
+	var marks cty.ValueMarks
+	// store the marked values so we can re-mark them later after
+	// we've sent things over the wire
+	cty.Walk(configVal, func(p cty.Path, v cty.Value) (bool, error) {
+		if v.IsMarked() {
+			pee = p
+			marks = v.Marks()
+			fmt.Println(marks)
+			fmt.Printf("%#v\n", p)
+		}
+		return true, nil
+	})
+	// Unmark the value
+	sval, _ := configVal.UnmarkDeep()
+
 	metaConfigVal := cty.NullVal(cty.DynamicPseudoType)
 	if n.ProviderMetas != nil {
 		if m, ok := n.ProviderMetas[n.ProviderAddr.Provider]; ok && m != nil {
@@ -183,8 +200,8 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 	} else {
 		priorVal = cty.NullVal(schema.ImpliedType())
 	}
-
-	proposedNewVal := objchange.ProposedNewObject(schema, priorVal, configVal)
+	// sval := configVal
+	proposedNewVal := objchange.ProposedNewObject(schema, priorVal, sval)
 
 	// Call pre-diff hook
 	if !n.Stub {
@@ -203,7 +220,7 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 	validateResp := provider.ValidateResourceTypeConfig(
 		providers.ValidateResourceTypeConfigRequest{
 			TypeName: n.Addr.Resource.Type,
-			Config:   configVal,
+			Config:   sval,
 		},
 	)
 	if validateResp.Diagnostics.HasErrors() {
@@ -223,7 +240,7 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 
 	resp := provider.PlanResourceChange(providers.PlanResourceChangeRequest{
 		TypeName:         n.Addr.Resource.Type,
-		Config:           configVal,
+		Config:           sval,
 		PriorState:       priorVal,
 		ProposedNewState: proposedNewVal,
 		PriorPrivate:     priorPrivate,
@@ -235,6 +252,25 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 	}
 
 	plannedNewVal := resp.PlannedState
+
+	// Look for our path in our planned new value
+	testing, _ := pee.Apply(plannedNewVal)
+	fmt.Printf("%#v\n", testing)
+	// if err == nil {
+	// mark that value with our saved mark
+	testing = testing.Mark("sensitive")
+	// }
+	fmt.Printf("%#v\n", testing)
+
+	// Add the mark back to the planned new value
+	plannedNewVal, _ = cty.Transform(plannedNewVal, func(p cty.Path, v cty.Value) (cty.Value, error) {
+		if p.Equals(pee) {
+			return v.Mark("sensitive"), nil
+		}
+		return v, nil
+	})
+	fmt.Printf("%#v\n", plannedNewVal)
+
 	plannedPrivate := resp.PlannedPrivate
 
 	if plannedNewVal == cty.NilVal {
@@ -815,7 +851,12 @@ func (n *EvalWriteDiff) Eval(ctx EvalContext) (interface{}, error) {
 		return nil, fmt.Errorf("provider does not support resource type %q", n.Addr.Resource.Type)
 	}
 
-	csrc, err := change.Encode(schema.ImpliedType())
+	// Unmark the change so it can be encoded
+	// Unfortunately this need to get added back ... what about encoding unmarked??
+	newchange := *change
+	newchange.After, _ = change.After.UnmarkDeep()
+
+	csrc, err := newchange.Encode(schema.ImpliedType())
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode planned changes for %s: %s", addr, err)
 	}

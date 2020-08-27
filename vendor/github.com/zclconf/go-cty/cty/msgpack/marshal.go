@@ -42,6 +42,7 @@ func Marshal(val cty.Value, ty cty.Type) ([]byte, error) {
 
 func marshal(val cty.Value, ty cty.Type, path cty.Path, enc *msgpack.Encoder) error {
 	if val.IsMarked() {
+		panic("HEre")
 		return path.NewErrorf("value has marks, so it cannot be seralized")
 	}
 

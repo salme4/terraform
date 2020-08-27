@@ -7,7 +7,8 @@ import (
 // InputVariable is the address of an input variable.
 type InputVariable struct {
 	referenceable
-	Name string
+	Name      string
+	Sensitive bool
 }
 
 func (v InputVariable) String() string {
