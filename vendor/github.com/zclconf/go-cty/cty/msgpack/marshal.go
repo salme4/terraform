@@ -2,7 +2,6 @@ package msgpack
 
 import (
 	"bytes"
-	"fmt"
 	"math/big"
 	"sort"
 
@@ -50,22 +49,6 @@ type MarkInfo struct {
 }
 
 func MarshalWithMarks(val cty.Value, ty cty.Type) ([]byte, error, *MarkInfo) {
-	errs := val.Type().TestConformance(ty)
-	if errs != nil {
-		// Attempt a conversion
-		var err error
-		val, err = convert.Convert(val, ty)
-		if err != nil {
-			return nil, err, nil
-		}
-	}
-
-	// From this point onward, val can be assumed to be conforming to t.
-
-	var path cty.Path
-	var buf bytes.Buffer
-	enc := msgpack.NewEncoder(&buf)
-
 	markInfo := MarkInfo{}
 	if val.ContainsMarked() {
 		// store the marked values so we can re-mark them later after
@@ -74,26 +57,21 @@ func MarshalWithMarks(val cty.Value, ty cty.Type) ([]byte, error, *MarkInfo) {
 			if v.IsMarked() {
 				markInfo.Path = p
 				markInfo.Marks = v.Marks()
-				fmt.Println(markInfo)
-				fmt.Printf("Value in walk %#v\n", p)
 			}
 			return true, nil
 		})
-		fmt.Printf("Value in Marshall: %#v", val)
 		val, _ = val.UnmarkDeep()
 	}
-	fmt.Printf("Value in walk %#v\n", markInfo)
-	err := marshal(val, ty, path, enc)
+	by, err := Marshal(val, ty)
 	if err != nil {
 		return nil, err, &markInfo
 	}
 
-	return buf.Bytes(), nil, &markInfo
+	return by, nil, &markInfo
 }
 
 func marshal(val cty.Value, ty cty.Type, path cty.Path, enc *msgpack.Encoder) error {
 	if val.IsMarked() {
-		panic("here")
 		return path.NewErrorf("value has marks, so it cannot be seralized")
 	}
 
