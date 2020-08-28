@@ -33,8 +33,7 @@ func (t *RootVariableTransformer) Transform(g *Graph) error {
 		fmt.Printf("Adding NodeRootVariable: sensitivity for %s is %v\n", v.Name, v.Sensitive)
 		node := &NodeRootVariable{
 			Addr: addrs.InputVariable{
-				Name:      v.Name,
-				Sensitive: v.Sensitive,
+				Name: v.Name,
 			},
 			Config: v,
 		}

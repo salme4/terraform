@@ -292,14 +292,8 @@ func (s *Scope) evalContext(refs []*addrs.Reference, selfAddr addrs.Referenceabl
 			wholeModules[subj.Name] = val
 
 		case addrs.InputVariable:
-			fmt.Println("We're about to call GetInputVariable")
-			fmt.Printf("%#v\n", subj)
 			val, valDiags := normalizeRefValue(s.Data.GetInputVariable(subj, rng))
 			diags = diags.Append(valDiags)
-			fmt.Println("In eval")
-			if subj.Sensitive {
-				fmt.Println("SENSITIVE ADDRESS")
-			}
 			inputVariables[subj.Name] = val
 
 		case addrs.LocalValue:
