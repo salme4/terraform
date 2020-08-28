@@ -159,7 +159,7 @@ type ChangeSrc struct {
 	Before, After DynamicValue
 
 	// Marked Paths
-	Markinfo *ctymsgpack.MarkInfo
+	ValMarks *ctymsgpack.MarkInfo
 }
 
 // Decode unmarshals the raw representations of the before and after values

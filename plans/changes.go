@@ -1,8 +1,6 @@
 package plans
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/states"
 	"github.com/zclconf/go-cty/cty"
@@ -344,9 +342,6 @@ func (c *Change) Encode(ty cty.Type) (*ChangeSrc, error) {
 		return nil, err
 	}
 	afterDV, err, marks := NewDynamicValueMarks(c.After, ty)
-	// Remark the value
-	fmt.Println("THE MARK INFO")
-	fmt.Println(marks)
 	if err != nil {
 		return nil, err
 	}
@@ -355,6 +350,6 @@ func (c *Change) Encode(ty cty.Type) (*ChangeSrc, error) {
 		Action:   c.Action,
 		Before:   beforeDV,
 		After:    afterDV,
-		Markinfo: marks,
+		ValMarks: marks,
 	}, nil
 }

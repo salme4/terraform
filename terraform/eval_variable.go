@@ -91,10 +91,6 @@ func (n *EvalModuleCallArgument) Eval(ctx EvalContext) (interface{}, error) {
 	scope := ctx.EvaluationScope(nil, moduleInstanceRepetitionData)
 	val, diags := scope.EvalExpr(expr, cty.DynamicPseudoType)
 
-	if n.Config.Sensitive {
-		fmt.Println("WE HERE!!")
-	}
-
 	// We intentionally passed DynamicPseudoType to EvalExpr above because
 	// now we can do our own local type conversion and produce an error message
 	// with better context if it fails.

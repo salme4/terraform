@@ -126,7 +126,7 @@ func ResourceChange(
 	// Now that the change is decoded, add back the marks at the defined paths
 	// change.Markinfo
 	changeV.Change.After, _ = cty.Transform(changeV.Change.After, func(p cty.Path, v cty.Value) (cty.Value, error) {
-		if p.Equals(change.Markinfo.Path) {
+		if p.Equals(change.ValMarks.Path) {
 			// TODO The mark is at change.Markinfo.Marks and it would be proper
 			// to iterate through that set here
 			return v.Mark("sensitive"), nil
@@ -529,16 +529,7 @@ func (p *blockBodyDiffPrinter) writeNestedBlockDiff(name string, label *string, 
 }
 
 func (p *blockBodyDiffPrinter) writeValue(val cty.Value, action plans.Action, indent int) {
-	// If val has the tag thing
-	// p.buf.WriteString("(sensitive)")
-	// return
-	// type valueSensitivity bool
-	// var isSensitive valueSensitivity = true
-	// val = val.Mark(isSensitive)
-	// fmt.Println(isSensitive)
-	fmt.Printf("Checking mark: %v\n", val.IsMarked())
-	// fmt.Printf("%#v\n", val.Marks())
-	// fmt.Println("marking worked")
+	// Could check specifically for the sensitivity marker
 	if val.IsMarked() {
 		p.buf.WriteString("(sensitive)")
 		return

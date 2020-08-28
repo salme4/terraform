@@ -41,6 +41,9 @@ func Marshal(val cty.Value, ty cty.Type) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// This type should (likely) be a map of paths
+// and marks, so that multiple marks can be found
+// in case of a value containing multiple marked values
 type MarkInfo struct {
 	Marks cty.ValueMarks
 	Path  cty.Path

@@ -58,6 +58,8 @@ func NewDynamicValue(val cty.Value, ty cty.Type) (DynamicValue, error) {
 	return DynamicValue(buf), nil
 }
 
+// NewDynamicValueMarks returns a new dynamic value along with a
+// associated marking info for the value
 func NewDynamicValueMarks(val cty.Value, ty cty.Type) (DynamicValue, error, *ctymsgpack.MarkInfo) {
 	// If we're given cty.NilVal (the zero value of cty.Value, which is
 	// distinct from a typed null value created by cty.NullVal) then we'll
@@ -69,7 +71,6 @@ func NewDynamicValueMarks(val cty.Value, ty cty.Type) (DynamicValue, error, *cty
 
 	// Currently our internal encoding is msgpack, via ctymsgpack.
 	buf, err, marks := ctymsgpack.MarshalWithMarks(val, ty)
-	fmt.Printf("Marks from NewDynamicValue: %#v\n", marks)
 	if err != nil {
 		return nil, err, marks
 	}

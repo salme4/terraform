@@ -3,7 +3,6 @@ package plugin
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"sync"
 
@@ -204,7 +203,6 @@ func (p *GRPCProvider) ValidateResourceTypeConfig(r providers.ValidateResourceTy
 	log.Printf("[TRACE] GRPCProvider: ValidateResourceTypeConfig")
 	resourceSchema := p.getResourceSchema(r.TypeName)
 
-	fmt.Printf("#%v\n", r.Config)
 	mp, err := msgpack.Marshal(r.Config, resourceSchema.Block.ImpliedType())
 	if err != nil {
 		resp.Diagnostics = resp.Diagnostics.Append(err)
