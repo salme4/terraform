@@ -1,8 +1,6 @@
 package plans
 
 import (
-	"fmt"
-
 	"github.com/zclconf/go-cty/cty"
 	ctymsgpack "github.com/zclconf/go-cty/cty/msgpack"
 )
@@ -49,8 +47,7 @@ func NewDynamicValue(val cty.Value, ty cty.Type) (DynamicValue, error) {
 	}
 
 	// Currently our internal encoding is msgpack, via ctymsgpack.
-	buf, err, marks := ctymsgpack.MarshalWithMarks(val, ty)
-	fmt.Printf("Marks from NewDynamicValue: %#v\n", marks)
+	buf, err := ctymsgpack.Marshal(val, ty)
 	if err != nil {
 		return nil, err
 	}
