@@ -141,22 +141,24 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 		return nil, diags.Err()
 	}
 
-	fmt.Printf("EVALDIFF Marks are/not present: %#v\n", configVal.ContainsMarked())
-	var pee cty.Path
-	var marks cty.ValueMarks
-	// store the marked values so we can re-mark them later after
-	// we've sent things over the wire
-	cty.Walk(configVal, func(p cty.Path, v cty.Value) (bool, error) {
-		if v.IsMarked() {
-			pee = p
-			marks = v.Marks()
-			fmt.Println(marks)
-			fmt.Printf("%#v\n", p)
-		}
-		return true, nil
-	})
-	// Unmark the value
-	sval, _ := configVal.UnmarkDeep()
+	var markedPath cty.Path
+	// var marks cty.ValueMarks
+	if configVal.ContainsMarked() {
+		// store the marked values so we can re-mark them later after
+		// we've sent things over the wire. Right now this stores
+		// one path for proof of concept, but we should store multiple
+		cty.Walk(configVal, func(p cty.Path, v cty.Value) (bool, error) {
+			if v.IsMarked() {
+				markedPath = p
+				return false, nil
+				// marks = v.Marks()
+			}
+			return true, nil
+		})
+		// Unmark the value for sending over the wire
+		// to providers as marks cannot be serialized
+		configVal, _ = configVal.UnmarkDeep()
+	}
 
 	metaConfigVal := cty.NullVal(cty.DynamicPseudoType)
 	if n.ProviderMetas != nil {
@@ -200,8 +202,8 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 	} else {
 		priorVal = cty.NullVal(schema.ImpliedType())
 	}
-	// sval := configVal
-	proposedNewVal := objchange.ProposedNewObject(schema, priorVal, sval)
+
+	proposedNewVal := objchange.ProposedNewObject(schema, priorVal, configVal)
 
 	// Call pre-diff hook
 	if !n.Stub {
@@ -220,7 +222,7 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 	validateResp := provider.ValidateResourceTypeConfig(
 		providers.ValidateResourceTypeConfigRequest{
 			TypeName: n.Addr.Resource.Type,
-			Config:   sval,
+			Config:   configVal,
 		},
 	)
 	if validateResp.Diagnostics.HasErrors() {
@@ -240,7 +242,7 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 
 	resp := provider.PlanResourceChange(providers.PlanResourceChangeRequest{
 		TypeName:         n.Addr.Resource.Type,
-		Config:           sval,
+		Config:           configVal,
 		PriorState:       priorVal,
 		ProposedNewState: proposedNewVal,
 		PriorPrivate:     priorPrivate,
@@ -253,23 +255,13 @@ func (n *EvalDiff) Eval(ctx EvalContext) (interface{}, error) {
 
 	plannedNewVal := resp.PlannedState
 
-	// Look for our path in our planned new value
-	testing, _ := pee.Apply(plannedNewVal)
-	fmt.Printf("%#v\n", testing)
-	// if err == nil {
-	// mark that value with our saved mark
-	testing = testing.Mark("sensitive")
-	// }
-	fmt.Printf("%#v\n", testing)
-
 	// Add the mark back to the planned new value
 	plannedNewVal, _ = cty.Transform(plannedNewVal, func(p cty.Path, v cty.Value) (cty.Value, error) {
-		if p.Equals(pee) {
+		if p.Equals(markedPath) {
 			return v.Mark("sensitive"), nil
 		}
 		return v, nil
 	})
-	fmt.Printf("%#v\n", plannedNewVal)
 
 	plannedPrivate := resp.PlannedPrivate
 
