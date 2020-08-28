@@ -127,7 +127,8 @@ func ResourceChange(
 	// change.Markinfo
 	changeV.Change.After, _ = cty.Transform(changeV.Change.After, func(p cty.Path, v cty.Value) (cty.Value, error) {
 		if p.Equals(change.Markinfo.Path) {
-			fmt.Println("FOUND PATH")
+			// TODO The mark is at change.Markinfo.Marks and it would be proper
+			// to iterate through that set here
 			return v.Mark("sensitive"), nil
 		}
 		return v, nil
@@ -215,8 +216,7 @@ func (p *blockBodyDiffPrinter) writeBlockBodyDiff(schema *configschema.Block, ol
 		attrNameLen := 0
 		for name := range schema.Attributes {
 			oldVal := ctyGetAttrMaybeNull(old, name)
-			unmarkednew, _ := new.UnmarkDeep()
-			newVal := ctyGetAttrMaybeNull(unmarkednew, name)
+			newVal := ctyGetAttrMaybeNull(new, name)
 			if oldVal.IsNull() && newVal.IsNull() {
 				// Skip attributes where both old and new values are null
 				// (we do this early here so that we'll do our value alignment
