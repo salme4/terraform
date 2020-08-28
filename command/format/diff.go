@@ -215,7 +215,8 @@ func (p *blockBodyDiffPrinter) writeBlockBodyDiff(schema *configschema.Block, ol
 		attrNameLen := 0
 		for name := range schema.Attributes {
 			oldVal := ctyGetAttrMaybeNull(old, name)
-			newVal := ctyGetAttrMaybeNull(new, name)
+			unmarkednew, _ := new.UnmarkDeep()
+			newVal := ctyGetAttrMaybeNull(unmarkednew, name)
 			if oldVal.IsNull() && newVal.IsNull() {
 				// Skip attributes where both old and new values are null
 				// (we do this early here so that we'll do our value alignment
@@ -538,6 +539,10 @@ func (p *blockBodyDiffPrinter) writeValue(val cty.Value, action plans.Action, in
 	fmt.Printf("Checking mark: %v\n", val.IsMarked())
 	// fmt.Printf("%#v\n", val.Marks())
 	// fmt.Println("marking worked")
+	if val.IsMarked() {
+		p.buf.WriteString("(sensitive)")
+		return
+	}
 
 	if !val.IsKnown() {
 		p.buf.WriteString("(known after apply)")
@@ -1117,7 +1122,8 @@ func ctyGetAttrMaybeNull(val cty.Value, name string) cty.Value {
 	// This allows us to avoid spurious diffs
 	// until we introduce null to the SDK.
 	attrValue := val.GetAttr(name)
-	if ctyEmptyString(attrValue) {
+	// If the value is marked, the ctyEmptyString function will fail
+	if !val.ContainsMarked() && ctyEmptyString(attrValue) {
 		return cty.NullVal(attrType)
 	}
 
