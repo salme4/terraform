@@ -1,8 +1,6 @@
 package terraform
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/configs"
 	"github.com/hashicorp/terraform/dag"
@@ -43,10 +41,6 @@ func (n *NodeRootVariable) EvalTree() EvalNode {
 	// its value is always constant and already stashed away in our EvalContext.
 	// However, we might need to run some user-defined validation rules against
 	// the value.
-
-	if n.Config.Sensitive {
-		fmt.Println("NodeRootVariable EvalTree, sensitive is true")
-	}
 
 	if n.Config == nil || len(n.Config.Validations) == 0 {
 		return &EvalSequence{} // nothing to do
