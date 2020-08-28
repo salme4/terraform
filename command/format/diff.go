@@ -123,6 +123,16 @@ func ResourceChange(
 	changeV.Change.Before = objchange.NormalizeObjectFromLegacySDK(changeV.Change.Before, schema)
 	changeV.Change.After = objchange.NormalizeObjectFromLegacySDK(changeV.Change.After, schema)
 
+	// Now that the change is decoded, add back the marks at the defined paths
+	// change.Markinfo
+	changeV.Change.After, _ = cty.Transform(changeV.Change.After, func(p cty.Path, v cty.Value) (cty.Value, error) {
+		if p.Equals(change.Markinfo.Path) {
+			fmt.Println("FOUND PATH")
+			return v.Mark("sensitive"), nil
+		}
+		return v, nil
+	})
+
 	bodyWritten := p.writeBlockBodyDiff(schema, changeV.Before, changeV.After, 6, path)
 	if bodyWritten {
 		buf.WriteString("\n")

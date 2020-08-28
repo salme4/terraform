@@ -1,6 +1,8 @@
 package plans
 
 import (
+	"fmt"
+
 	"github.com/zclconf/go-cty/cty"
 	ctymsgpack "github.com/zclconf/go-cty/cty/msgpack"
 )
@@ -47,12 +49,32 @@ func NewDynamicValue(val cty.Value, ty cty.Type) (DynamicValue, error) {
 	}
 
 	// Currently our internal encoding is msgpack, via ctymsgpack.
-	buf, err := ctymsgpack.Marshal(val, ty)
+	buf, err, marks := ctymsgpack.MarshalWithMarks(val, ty)
+	fmt.Printf("Marks from NewDynamicValue: %#v\n", marks)
 	if err != nil {
 		return nil, err
 	}
 
 	return DynamicValue(buf), nil
+}
+
+func NewDynamicValueMarks(val cty.Value, ty cty.Type) (DynamicValue, error, *ctymsgpack.MarkInfo) {
+	// If we're given cty.NilVal (the zero value of cty.Value, which is
+	// distinct from a typed null value created by cty.NullVal) then we'll
+	// assume the caller is trying to represent the _absense_ of a value,
+	// and so we'll return a nil DynamicValue.
+	if val == cty.NilVal {
+		return DynamicValue(nil), nil, nil
+	}
+
+	// Currently our internal encoding is msgpack, via ctymsgpack.
+	buf, err, marks := ctymsgpack.MarshalWithMarks(val, ty)
+	fmt.Printf("Marks from NewDynamicValue: %#v\n", marks)
+	if err != nil {
+		return nil, err, marks
+	}
+
+	return DynamicValue(buf), nil, marks
 }
 
 // Decode retrieves the effective value from the receiever by interpreting the

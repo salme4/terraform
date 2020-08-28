@@ -854,7 +854,7 @@ func (n *EvalWriteDiff) Eval(ctx EvalContext) (interface{}, error) {
 	// Unmark the change so it can be encoded
 	// Unfortunately this need to get added back ... what about encoding unmarked??
 	newchange := *change
-	newchange.After, _ = change.After.UnmarkDeep()
+	// newchange.After, _ = change.After.UnmarkDeep()
 
 	csrc, err := newchange.Encode(schema.ImpliedType())
 	if err != nil {

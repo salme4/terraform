@@ -1,6 +1,8 @@
 package plans
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/addrs"
 	"github.com/hashicorp/terraform/states"
 	"github.com/zclconf/go-cty/cty"
@@ -337,21 +339,22 @@ type Change struct {
 // to call the corresponding Encode method of that struct rather than working
 // directly with its embedded Change.
 func (c *Change) Encode(ty cty.Type) (*ChangeSrc, error) {
-	unmarked, _ = c.Before.UnmarkDeep()
-	beforeDV, err := NewDynamicValue(unmarked, ty)
+	beforeDV, err := NewDynamicValue(c.Before, ty)
 	if err != nil {
 		return nil, err
 	}
-	unmarked2, _ = c.After.UnmarkDeep()
-
-	afterDV, err := NewDynamicValue(unmarked, ty)
+	afterDV, err, marks := NewDynamicValueMarks(c.After, ty)
+	// Remark the value
+	fmt.Println("THE MARK INFO")
+	fmt.Println(marks)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ChangeSrc{
-		Action: c.Action,
-		Before: beforeDV,
-		After:  afterDV,
+		Action:   c.Action,
+		Before:   beforeDV,
+		After:    afterDV,
+		Markinfo: marks,
 	}, nil
 }

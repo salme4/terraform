@@ -34,7 +34,7 @@ func (t *RootVariableTransformer) Transform(g *Graph) error {
 		node := &NodeRootVariable{
 			Addr: addrs.InputVariable{
 				Name:      v.Name,
-				Sensitive: true, //v.Sensitive,
+				Sensitive: v.Sensitive,
 			},
 			Config: v,
 		}
